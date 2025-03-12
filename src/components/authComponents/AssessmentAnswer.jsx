@@ -139,14 +139,14 @@ export default function AssessmentAnswer(props) {
     };
   }, [userAnswerData, examId]);
 
-  // Function to send the user's draft to the server
-  const saveUserAnswerDraft = async () => {
-    if (!examId) return; // Ensure examId is available before saving
+  // Modify save function to accept data parameter
+  const saveUserAnswerDraft = async (data) => {
+    if (!examId) return;
     try {
       const response = await axios.post("http://localhost:3000/api/save-draft", {
         userId: username,
         examId,
-        userAnswerData,
+        userAnswerData: data || userAnswerData,
         timestamp: new Date(),
       });
       console.log("Draft saved successfully:", response.data);
@@ -155,7 +155,16 @@ export default function AssessmentAnswer(props) {
     }
   };
 
-  // Handlers for answer inputs
+  // Update answer content and save immediately
+  const setAnswerContent = (value) => {
+    setUserAnswerData((prevUserAnswers) => {
+      const newAnswerArray = Array.isArray(prevUserAnswers) ? [...prevUserAnswers] : [];
+      newAnswerArray[qNo] = { ...(newAnswerArray[qNo] || {}), answer: value };
+      saveUserAnswerDraft(newAnswerArray); // Immediate save with new data
+      return newAnswerArray;
+    });
+  };
+
   const handleCheckboxChange = (event) => {
     const value = event.target.value;
     const newSelectedOptions = selectedOptions.includes(value)
@@ -164,14 +173,12 @@ export default function AssessmentAnswer(props) {
 
     setSelectedOptions(newSelectedOptions);
     setAnswerContent(newSelectedOptions);
-    saveUserAnswerDraft();
   };
 
   const handleRadioButtonChange = (event) => {
     const value = event.target.value;
     setSelectedRadio([value]);
     setAnswerContent(value);
-    saveUserAnswerDraft();
   };
 
   const isCheckBoxChecked = (option) => {
@@ -187,16 +194,6 @@ export default function AssessmentAnswer(props) {
     return userAnswerData && userAnswerData[qNo] && userAnswerData[qNo].answer
       ? userAnswerData[qNo].answer
       : ""; // Default to empty string
-  };
-
-  // Function to update the user answer data
-  const setAnswerContent = (value) => {
-    setUserAnswerData((prevUserAnswers) => {
-      const newAnswerArray = Array.isArray(prevUserAnswers) ? [...prevUserAnswers] : [];
-      newAnswerArray[qNo] = { ...(newAnswerArray[qNo] || {}), answer: value };
-      saveUserAnswerDraft();
-      return newAnswerArray;
-    });
   };
 
   // Update available languages when 'lang' prop changes
