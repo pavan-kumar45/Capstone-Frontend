@@ -1,6 +1,8 @@
 "use client";
 import { useEffect, useState } from 'react';
 import styles from './ExamFeedback.module.css';
+import { jsPDF } from 'jspdf';
+import { jwtDecode } from 'jwt-decode';
 
 export default function ExamFeedback() {
   const [data, setData] = useState([]);
@@ -13,7 +15,6 @@ export default function ExamFeedback() {
         const examId = localStorage.getItem('exam_id');
         if (!examId) throw new Error('Exam ID not found in local storage');
 
-        // Use path parameter if your FastAPI endpoint is /feedback/exam/{exam_id}
         const response = await fetch(`http://localhost:8000/feedback/${examId}`);
         
         if (!response.ok) {
@@ -21,10 +22,8 @@ export default function ExamFeedback() {
         }
 
         const result = await response.json();
-        console.log('Fetched data:', result); // Debug the response
         setData(result);
       } catch (err) {
-        console.error('Fetch error:', err); // Log detailed error
         setError(err.message || 'Failed to fetch data');
       } finally {
         setLoading(false);
@@ -33,6 +32,86 @@ export default function ExamFeedback() {
 
     fetchData();
   }, []);
+
+  const handleDownloadPdf = () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) throw new Error('Authentication token not found');
+      
+      const decoded = jwtDecode(token);
+      const email = decoded.email;
+      const userName = decoded.name;
+
+      if (!data.length || !data[0]?.feedback) {
+        throw new Error('No feedback data available to download');
+      }
+
+      const doc = new jsPDF();
+      let yPos = 20;
+      const pageHeight = doc.internal.pageSize.height;
+
+      const addNewPageIfNeeded = (blockHeight) => {
+        if (yPos + blockHeight > pageHeight - 20) {
+          doc.addPage();
+          yPos = 20;
+        }
+      };
+
+      // Add title
+      doc.setFontSize(18);
+      doc.text('Exam Feedback Report', 10, yPos);
+      yPos += 15;
+
+      // Add user info
+      doc.setFontSize(12);
+      doc.text(`Email ID: ${email}`, 10, yPos);
+      yPos += 10;
+      doc.text(`Name: ${userName}`, 10, yPos);
+      yPos += 15;
+
+      // Add feedback content
+      data[0].feedback.forEach((item, index) => {
+        doc.setFontSize(14);
+        const questionTitle = `Question ${item.question_id}: ${item.question}`;
+        const questionLines = doc.splitTextToSize(questionTitle, 180);
+        const answerLines = doc.splitTextToSize(`Your Answer: ${item.answer}`, 180);
+        const feedbackLines = doc.splitTextToSize(`Feedback: ${item.feedback}`, 180);
+        const blockHeight =
+          questionLines.length * 10 +
+          10 + // Score
+          answerLines.length * 10 +
+          feedbackLines.length * 10 +
+          20; // Padding + separator
+
+        addNewPageIfNeeded(blockHeight);
+
+        doc.text(questionLines, 10, yPos);
+        yPos += questionLines.length * 10;
+
+        doc.setFontSize(12);
+        doc.text(`Score: ${item.score}`, 10, yPos);
+        yPos += 10;
+
+        doc.text(answerLines, 10, yPos);
+        yPos += answerLines.length * 10;
+
+        doc.text(feedbackLines, 10, yPos);
+        yPos += feedbackLines.length * 10;
+
+        // Add separator if not last item
+        if (index < data[0].feedback.length - 1) {
+          doc.setDrawColor(200);
+          doc.line(10, yPos, 200, yPos);
+          yPos += 10;
+        }
+      });
+
+      doc.save('exam-feedback-report.pdf');
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      alert(`Error generating PDF: ${error.message}`);
+    }
+  };
 
   if (loading) {
     return (
@@ -54,6 +133,13 @@ export default function ExamFeedback() {
 
   return (
     <div className={styles.container}>
+      <button 
+        onClick={handleDownloadPdf}
+        className={styles.downloadButton}
+      >
+        Download PDF
+      </button>
+      
       <h1 className={styles.title}>Exam Feedback</h1>
       {data[0]?.feedback.map((item) => (
         <div key={item.question_id} className={styles.feedbackCard}>

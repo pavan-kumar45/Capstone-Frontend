@@ -212,7 +212,7 @@ export default function AssessmentHeader() {
   return (
     <div className="assessmentheader-maincontent assessment-content">
       <div className="assessmentheader-leftcontent">
-        <Link href="./Home/">Hiregloo</Link>
+        <Link href="./Home/"></Link>
       </div>
       <div className="assessmentheader-rightcontent">
         {!isSubmitted ? (

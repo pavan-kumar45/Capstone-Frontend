@@ -56,7 +56,7 @@ export default function PPNavBar() {
             <IoMdMenu className={styles['pp-hamburger-icon']} />
           </button>
         </div>
-        <h1 className={styles['navbar-heading']}>Hiregloo</h1>
+        <h1 className={styles['navbar-heading']}></h1>
       </div>
       <div className={styles['pp-nav-right']}>
         <div className={styles['menu-options']}>

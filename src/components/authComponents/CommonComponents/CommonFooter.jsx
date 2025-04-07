@@ -11,7 +11,7 @@ export default function CommonFooter() {
       <div className={styles['cf-right-content']}>
         <div className={styles['cf-left-content']}>
           <div className={styles['cf-logo']}>
-            <h3>Hiregloo</h3>
+            <h3></h3>
           </div>
           <div className={`${styles['cf']} ${styles['social-media']}`}>
             <div className={styles['cf-heading']}>Connect with us</div>

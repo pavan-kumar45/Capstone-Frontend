@@ -10,8 +10,8 @@ const poppins = Poppins({
 });
 
 export const metadata = {
-  title: "Job Circuit",
-  description: "Ai powered recruiting portal",
+  title: "Capstone Project",
+  description: "AI",
 };
 
 export default function RootLayout({ children }) {
